@@ -1,5 +1,5 @@
 """
-Основной модуль интернет-магазина с демонстрацией абстрактных классов и миксинов.
+Основной модуль интернет-магазина с демонстрацией обработки исключений.
 """
 
 import sys
@@ -9,82 +9,100 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from .models import (BaseProduct, Product, Smartphone, LawnGrass, 
-                     Category, LoggingMixin, load_categories_from_json, OrderItem)
+                     Category, LoggingMixin, ZeroQuantityError, 
+                     load_categories_from_json, OrderItem)
 
 
-def demonstrate_abstract_classes_and_mixins():
-    """Демонстрация работы абстрактных классов и миксинов."""
+def demonstrate_exceptions():
+    """Демонстрация работы с исключениями."""
     print("\n" + "=" * 70)
-    print("ДЕМОНСТРАЦИЯ АБСТРАКТНЫХ КЛАССОВ И МИКСИНОВ")
+    print("ДЕМОНСТРАЦИЯ ОБРАБОТКИ ИСКЛЮЧЕНИЙ")
     print("=" * 70)
-    print("\n1. Создание объектов с логированием (миксин LoggingMixin):")
+    
+    print("\n1. Создание товара с нулевым количеством (ValueError):")
     print("-" * 50)
     
-    print("\nСоздание базового товара:")
-    product = Product("Книга", "Художественная литература", 500, 10)
+    try:
+        print("Пытаемся создать товар с quantity=0...")
+        bad_product = Product("Несуществующий товар", "Описание", 100, 0)
+        print("ОШИБКА: Этот код не должен был выполниться")
+    except ValueError as e:
+        print(f"[OK] Поймано исключение ValueError: {e}")
     
-    print("\nСоздание смартфона:")
-    smartphone = Smartphone(
-        name="iPhone 15 Pro",
-        description="Флагманский смартфон Apple",
-        price=129999,
-        quantity=5,
-        efficiency="A17 Pro",
-        model="iPhone 15 Pro",
-        memory=256,
-        color="Титановый синий"
-    )
-    print("\nСоздание газонной травы:")
-    lawn_grass = LawnGrass(
-        name="Газонная трава Premium",
-        description="Высококачественная газонная трава",
-        price=2500,
-        quantity=15,
-        country="Германия",
-        germination_period=14,
-        color="Изумрудно-зеленый"
-    )
-    
-    print("\n2. Проверка наследования от абстрактного класса BaseProduct:")
+    print("\n2. Создание товара с корректным количеством:")
     print("-" * 50)
     
-    print(f"product является Product: {isinstance(product, Product)}")
-    print(f"product является BaseProduct: {isinstance(product, BaseProduct)}")
-    print(f"smartphone является Smartphone: {isinstance(smartphone, Smartphone)}")
-    print(f"smartphone является Product: {isinstance(smartphone, Product)}")
-    print(f"smartphone является BaseProduct: {isinstance(smartphone, BaseProduct)}")
-    print(f"lawn_grass является LawnGrass: {isinstance(lawn_grass, LawnGrass)}")
-    print(f"lawn_grass является BaseProduct: {isinstance(lawn_grass, BaseProduct)}")
-    print("\n3. Демонстрация методов абстрактного класса:")
+    try:
+        good_product = Product("Книга", "Художественная литература", 500, 10)
+        print(f"[OK] Товар создан успешно: {good_product}")
+    except ValueError as e:
+        print(f"ОШИБКА: {e}")
+    
+    print("\n3. Метод get_average_price() в Category:")
+    print("-" * 50)
+    # Создаем категорию с товарами
+    products = [
+        Product("Товар 1", "Описание", 100, 5),
+        Product("Товар 2", "Описание", 200, 3),
+        Product("Товар 3", "Описание", 300, 2),
+    ]
+    
+    category_with_products = Category("Категория с товарами", "Описание", products)
+    average_price = category_with_products.get_average_price()
+    print(f"Средняя цена в категории с товарами: {average_price:.2f} руб.")
+    
+    # Создаем пустую категорию
+    empty_category = Category("Пустая категория", "Нет товаров")
+    empty_average = empty_category.get_average_price()
+    print(f"Средняя цена в пустой категории: {empty_average} руб.")
+    
+    print("\n4. Добавление товара в категорию с проверкой:")
     print("-" * 50)
     
-    print(f"\nМетод get_total_cost() для товаров:")
-    print(f"  {product.name}: {product.get_total_cost()} руб.")
-    print(f"  {smartphone.name}: {smartphone.get_total_cost()} руб.")
-    print(f"  {lawn_grass.name}: {lawn_grass.get_total_cost()} руб.")
+    category = Category("Тестовая категория", "Для демонстрации")
     
-    print(f"\nИзменение количества товаров:")
-    print(f"  Увеличение количества {product.name} на 5: {product.increase_quantity(5)}")
-    print(f"  Новое количество: {product.quantity}")
-    print(f"  Уменьшение количества {product.name} на 3: {product.decrease_quantity(3)}")
-    print(f"  Новое количество: {product.quantity}")
+    print("Пытаемся добавить товар с нулевым количеством...")
+    try:
+        zero_product = Product("Товар с 0", "Описание", 100, 0)
+        print("ОШИБКА: Товар не должен был быть создан")
+    except ValueError as e:
+        print(f"[OK] Товар не создан: {e}")
+    print("\nПытаемся добавить корректный товар...")
+    try:
+        category.add_product(good_product)
+    except Exception as e:
+        print(f"ОШИБКА: {e}")
     
-    print("\n4. Проверка __repr__ методов:")
-    print("-" * 50)
-    print(f"repr(product): {repr(product)}")
-    print(f"repr(smartphone): {repr(smartphone)}")
-    print(f"repr(lawn_grass): {repr(lawn_grass)}")
-    
-    print("\n5. Дополнительное задание: класс OrderItem:")
+    print("\n5. Дополнительное задание: пользовательское исключение ZeroQuantityError:")
     print("-" * 50)
     
-    order_item1 = OrderItem(smartphone, 2)
-    order_item2 = OrderItem(lawn_grass, 5)
+    try:
+        print("Создаем OrderItem с quantity=0...")
+        order_item = OrderItem(good_product, 0)
+        print("ОШИБКА: Заказ не должен был быть создан")
+    except ZeroQuantityError as e:
+        print(f"[OK] Поймано пользовательское исключение ZeroQuantityError: {e}")
     
-    print(f"Элемент заказа 1: {order_item1}")
-    print(f"Элемент заказа 2: {order_item2}")
+    print("\nСоздаем OrderItem с корректным количеством...")
+    try:
+        order_item = OrderItem(good_product, 3)
+        print(f"[OK] Заказ создан: {order_item}")
+    except ZeroQuantityError as e:
+        print(f"ОШИБКА: {e}")
+    print("\n6. Добавление товара с нулевым количеством через add_product:")
+    print("-" * 50)
     
-    print(f"\nОбщая стоимость заказа: {order_item1.total_cost + order_item2.total_cost} руб.")
+    # Сначала создадим товар с количеством 1
+    temp_product = Product("Временный товар", "Описание", 50, 1)
+    
+    # Затем попробуем изменить количество на 0 и добавить
+    try:
+        print("Устанавливаем quantity=0 у существующего товара...")
+        temp_product.quantity = 0
+        category.add_product(temp_product)
+        print("ОШИБКА: Товар не должен был быть добавлен")
+    except ZeroQuantityError as e:
+        print(f"[OK] Поймано ZeroQuantityError: {e}")
 
 
 def create_sample_data():
@@ -97,7 +115,6 @@ def create_sample_data():
     # Сбрасываем счетчики для чистоты примера
     Category.category_count = 0
     Category.product_count = 0
-    
     # Создаем товары разных типов
     book = Product(
         name="Python для начинающих", 
@@ -116,6 +133,7 @@ def create_sample_data():
         memory=256,
         color="Титановый серый"
     )
+    
     lawn_grass = LawnGrass(
         name="Газонная трава Premium",
         description="Высококачественная газонная трава для дачи",
@@ -125,13 +143,13 @@ def create_sample_data():
         germination_period=10,
         color="Изумрудно-зеленый"
     )
-    
     # Создаем категории
     books_category = Category(
         name="Книги", 
         description="Учебная литература", 
         products=[book]
     )
+    
     electronics_category = Category(
         name="Электроника", 
         description="Техника и гаджеты", 
@@ -146,7 +164,6 @@ def create_sample_data():
     
     return [books_category, electronics_category, garden_category]
 
-
 def print_store_info(categories):
     """
     Выводит информацию о магазине.
@@ -157,6 +174,7 @@ def print_store_info(categories):
     print("\n" + "=" * 50)
     print("ИНФОРМАЦИЯ О МАГАЗИНЕ")
     print("=" * 50)
+    
     print(f"\nВсего категорий: {Category.category_count}")
     print(f"Всего товаров: {Category.product_count}")
     
@@ -165,20 +183,20 @@ def print_store_info(categories):
         print(f"Категория: {category.name}")
         print(f"Описание: {category.description}")
         print(f"Общее количество товаров: {category.total_quantity}")
+        print(f"Средняя цена товаров: {category.get_average_price():.2f} руб.")
         
         if category.products:
             print("\nТовары в категории:")
             print(category.products)
         else:
             print("\nВ категории нет товаров")
-
-
 def main():
     """Основная функция программы."""
-    print("ДЕМОНСТРАЦИЯ РАБОТЫ ИНТЕРНЕТ-МАГАЗИНА С АБСТРАКТНЫМИ КЛАССАМИ И МИКСИНАМИ")
+    print("ДЕМОНСТРАЦИЯ РАБОТЫ ИНТЕРНЕТ-МАГАЗИНА С ОБРАБОТКОЙ ИСКЛЮЧЕНИЙ")
     print("=" * 70)
-    # Демонстрация 1: Абстрактные классы и миксины
-    demonstrate_abstract_classes_and_mixins()
+    
+    # Демонстрация 1: Обработка исключений
+    demonstrate_exceptions()
     
     # Демонстрация 2: Создание и вывод примерных данных
     print("\n" + "=" * 70)
@@ -188,55 +206,19 @@ def main():
     sample_categories = create_sample_data()
     print_store_info(sample_categories)
     
-    # Демонстрация 3: Загрузка из JSON
+    # Демонстрация 3: Работа с get_average_price
     print("\n" + "=" * 70)
-    print("3. ЗАГРУЗКА ИЗ JSON ФАЙЛА:")
+    print("3. РАБОТА С МЕТОДОМ get_average_price():")
     print("=" * 70)
     
-    # Создаем тестовый JSON файл
-    import json
-    test_json_data = [
-        {
-            "name": "Электроника",
-            "description": "Техника и устройства",
-            "products": [
-                {
-                    "name": "Смартфон",
-                    "description": "Телефон",
-                    "price": 50000,
-                    "quantity": 5,
-                    "model": "Model X",
-                    "memory": 128,
-                    "efficiency": "Высокая",
-                    "color": "Черный"
-                }
-            ]
-        }
-    ]
+    print("\nПроверка средней цены для разных категорий:")
+    for category in sample_categories:
+        avg_price = category.get_average_price()
+        print(f"  {category.name}: {avg_price:.2f} руб.")
     
-    with open("test_demo.json", "w", encoding="utf-8") as f:
-        json.dump(test_json_data, f, ensure_ascii=False, indent=2)
-    
-    print("   Создан тестовый файл test_demo.json")
-    
-    try:
-        categories = load_categories_from_json("test_demo.json")
-        print("   Файл успешно загружен")
-        
-        print("\n   Результаты загрузки:")
-        for category in categories:
-            print(f"\n   Категория: {category.name}")
-            for product in category:
-                print(f"     - {product.name} ({type(product).__name__})")
-                
-    except Exception as e:
-        print(f"   Ошибка при загрузке: {e}")
-    
-    # Удаляем тестовый файл
-    if os.path.exists("test_demo.json"):
-        os.unlink("test_demo.json")
-        print("\n   Тестовый файл удален")
-    
+    # Проверка пустой категории
+    empty_category = Category("Тестовая пустая", "Без товаров")
+    print(f"\n  Пустая категория '{empty_category.name}': {empty_category.get_average_price()} руб.")
     print("\n" + "=" * 70)
     print("ДЕМОНСТРАЦИЯ ЗАВЕРШЕНА")
     print("=" * 70)
