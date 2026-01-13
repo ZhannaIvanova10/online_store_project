@@ -1,59 +1,74 @@
 """
-Дополнительные тесты для main.py.
+Дополнительные тесты для основного модуля.
 """
 
 import sys
 import os
-import io
-from contextlib import redirect_stdout
+import tempfile
+import json
 
 # Добавляем путь к src в PYTHONPATH
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.main import create_sample_data, print_store_info, load_and_print_json_data
-from src.models import Category, Product
+from src.models import Category
+from io import StringIO
+import contextlib
 
 
 def test_create_sample_data():
-    """Тест функции создания тестовых данных."""
-    cat1, cat2 = create_sample_data()
-
-    assert cat1.name == "Смартфоны"
-    assert cat2.name == "Аксессуары"
-    assert len(cat1.products) == 2
-    assert len(cat2.products) == 1
-    assert Category.category_count >= 2
-
-
+    """Тест создания примерных данных."""
+    # Сбрасываем счетчики
+    Category.category_count = 0
+    Category.product_count = 0
+    
+    categories = create_sample_data()
+    # Проверяем результаты
+    assert len(categories) == 2
+    assert categories[0].name == "Электроника"
+    assert categories[1].name == "Книги"
+    
+    # Проверяем товары в первой категории
+    products_str = categories[0].products
+    assert "Ноутбук" in products_str
+    assert "Смартфон" in products_str
+    assert "Планшет" in products_str
+    
+    # Проверяем товары во второй категории
+    products_str2 = categories[1].products
+    assert "Python для начинающих" in products_str2
+    assert "Алгоритмы и структуры данных" in products_str2
+    
+    # Проверяем счетчики
+    assert Category.category_count == 2
+    assert Category.product_count == 5
 def test_print_store_info():
-    """Тест функции вывода информации о магазине."""
-    # Создаем тестовые данные
-    product1 = Product("Test1", "Desc1", 100, 1)
-    product2 = Product("Test2", "Desc2", 200, 2)
-
-    cat1 = Category("Category1", "Desc1", [product1])
-    cat2 = Category("Category2", "Desc2", [product2])
-
-    # Захватываем вывод
-    f = io.StringIO()
-    with redirect_stdout(f):
-        print_store_info(cat1, cat2)
-
-    output = f.getvalue()
-
-    # Проверяем ключевые элементы вывода
-    assert "ИНФОРМАЦИЯ О МАГАЗИНЕ" in output
-    assert "Category1" in output
-    assert "Category2" in output
-    assert "Всего категорий в магазине:" in output
-
+    """Тест вывода информации о магазине."""
+    # Сбрасываем счетчики
+    Category.category_count = 0
+    Category.product_count = 0
+    
+    categories = create_sample_data()
+    
+    # Перенаправляем stdout
+    output = StringIO()
+    with contextlib.redirect_stdout(output):
+        print_store_info(categories)
+    
+    captured_output = output.getvalue()
+    
+    # Проверяем вывод
+    assert "ИНФОРМАЦИЯ О МАГАЗИНЕ" in captured_output
+    assert "Всего категорий: 2" in captured_output
+    assert "Всего товаров: 5" in captured_output
+    assert "Электроника" in captured_output
+    assert "Книги" in captured_output
+    assert "Ноутбук" in captured_output
+    assert "Python для начинающих" in captured_output
 
 def test_load_and_print_json_data_output():
-    """Тест вывода функции load_and_print_json_data."""
-    # Создаем временный файл products.json для теста
-    import json
-    import tempfile
-
+    """Тест вывода при загрузке из JSON файла."""
+    # Создаем тестовый JSON файл
     test_data = [
         {
             "name": "Test Category",
@@ -61,35 +76,34 @@ def test_load_and_print_json_data_output():
             "products": [
                 {
                     "name": "Test Product",
-                    "description": "Test product desc",
+                    "description": "Test product description",
                     "price": 100.0,
                     "quantity": 5,
                 }
             ],
         }
     ]
-
-    # Сохраняем оригинальный файл если существует
-    original_exists = os.path.exists("products.json")
-    if original_exists:
-        os.rename("products.json", "products.json.backup")
+    temp_file = tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, encoding="utf-8"
+    )
+    json.dump(test_data, temp_file, ensure_ascii=False)
+    temp_file.close()
+    
     try:
-        # Создаем тестовый файл
-        with open("products.json", "w", encoding="utf-8") as f:
-            json.dump(test_data, f, ensure_ascii=False)
-
-        # Тестируем функцию
-        f = io.StringIO()
-        with redirect_stdout(f):
-            load_and_print_json_data()
-
-        output = f.getvalue()
-        assert "ДАННЫЕ ИЗ JSON-ФАЙЛА" in output
-        assert "Test Category" in output
-
+        # Перенаправляем stdout
+        output = StringIO()
+        with contextlib.redirect_stdout(output):
+            load_and_print_json_data(temp_file.name)
+        
+        captured_output = output.getvalue()
+        
+        # Проверяем вывод
+        assert "Загрузка данных из файла" in captured_output
+        assert "Test Category" in captured_output
+        assert "Test description" in captured_output
+        assert "Test Product" in captured_output
+        assert "100.0" in captured_output
+        
     finally:
-        # Восстанавливаем оригинальный файл
-        if os.path.exists("products.json"):
-            os.unlink("products.json")
-        if original_exists:
-            os.rename("products.json.backup", "products.json")
+        if os.path.exists(temp_file.name):
+            os.unlink(temp_file.name)
