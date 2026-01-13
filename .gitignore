@@ -1,7 +1,6 @@
 __pycache__/
 *.pyc
 .pytest_cache/
-.coverage
 htmlcov/
 .venv/
 .poetry/
@@ -10,3 +9,11 @@ venv/
 .idea/
 .vscode/
 *.log
+
+# Coverage reports
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+.hypothesis/
+.pytest_cache/
