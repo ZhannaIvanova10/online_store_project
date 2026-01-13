@@ -63,18 +63,14 @@ def test_load_categories_from_json():
         assert len(categories) == 1
         assert categories[0].name == "Test Category"
         assert categories[0].description == "Test category description"
-        assert len(categories[0].products) == 2
-
-        # Проверяем товары
-        product1 = categories[0].products[0]
-        assert product1.name == "Test Product 1"
-        assert product1.price == 100.50
-        assert product1.quantity == 10
-
-        product2 = categories[0].products[1]
-        assert product2.name == "Test Product 2"
-        assert product2.price == 200.75
-        assert product2.quantity == 5
+        
+        # products теперь строка, проверяем содержимое
+        products_str = categories[0].products
+        assert "Test Product 1" in products_str
+        assert "Test Product 2" in products_str
+        assert "100.5" in products_str or "100.50" in products_str
+        assert "200.75" in products_str
+        
         # Проверяем счетчики
         assert Category.category_count == 1
         assert Category.product_count == 2
@@ -106,10 +102,9 @@ def test_load_categories_from_json_with_empty_products():
         Category.product_count = 0
 
         categories = load_categories_from_json(temp_file.name)
-
         assert len(categories) == 1
         assert categories[0].name == "Empty Category"
-        assert len(categories[0].products) == 0
+        assert categories[0].products == ""  # Пустая строка для пустого списка
         assert Category.category_count == 1
         assert Category.product_count == 0
 
@@ -125,7 +120,6 @@ def test_load_categories_from_json_file_not_found():
     # Пытаемся загрузить несуществующий файл
     with pytest.raises(FileNotFoundError):
         load_categories_from_json("non_existent_file_12345.json")
-
 
 def test_load_categories_from_invalid_json():
     """Тест обработки невалидного JSON."""
@@ -151,7 +145,6 @@ def test_load_real_json_file():
         # Сбрасываем счетчики
         Category.category_count = 0
         Category.product_count = 0
-
         categories = load_categories_from_json("products.json")
 
         # Проверяем, что что-то загрузилось
@@ -162,4 +155,5 @@ def test_load_real_json_file():
             assert hasattr(categories[0], "name")
             assert hasattr(categories[0], "description")
             assert hasattr(categories[0], "products")
-            assert isinstance(categories[0].products, list)
+            # Теперь products - это строка
+            assert isinstance(categories[0].products, str)

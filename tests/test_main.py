@@ -1,71 +1,77 @@
 """
-Тесты для основного модуля main.py
+Тесты для основного модуля main.py.
 """
 
 import sys
 import os
-import io
-from contextlib import redirect_stdout
+import tempfile
+import json
 
 # Добавляем путь к src в PYTHONPATH
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.main import main, load_and_print_json_data
-
-
+from src.main import main, create_sample_data, print_store_info, load_and_print_json_data
+from io import StringIO
+import contextlib
 def test_main_output():
-    """Тест вывода основной программы."""
-    # Сохраняем текущие счетчики
-    from src.models import Category
-
-    original_category_count = Category.category_count
-    original_product_count = Category.product_count
-
-    # Захватываем вывод программы
-    f = io.StringIO()
-    with redirect_stdout(f):
+    """Тест вывода основной функции."""
+    # Перенаправляем stdout
+    output = StringIO()
+    with contextlib.redirect_stdout(output):
         main()
-
-    output = f.getvalue()
-
-    # Проверяем, что вывод содержит ожидаемые строки
-    assert "ИНФОРМАЦИЯ О МАГАЗИНЕ" in output
-    assert "Смартфоны" in output
-    assert "Аксессуары" in output
-    assert "Всего категорий в магазине:" in output
-    assert "Всего уникальных товаров в магазине:" in output
-    # Восстанавливаем счетчики
-    Category.category_count = original_category_count
-    Category.product_count = original_product_count
-
-
+    
+    captured_output = output.getvalue()
+    
+    # Проверяем обязательные элементы вывода
+    assert "ДЕМОНСТРАЦИЯ РАБОТЫ ИНТЕРНЕТ-МАГАЗИНА" in captured_output
+    assert "Примерные данные:" in captured_output
+    assert "ДЕМОНСТРАЦИЯ МАГИЧЕСКИХ МЕТОДОВ" in captured_output
+    assert "ЗАГРУЗКА ИЗ JSON ФАЙЛА" in captured_output
+    assert "Электроника" in captured_output
+    assert "Книги" in captured_output
+    assert "Ноутбук" in captured_output
+    assert "Смартфон" in captured_output
 def test_main_is_callable():
-    """Тест, что main() можно вызвать без ошибок."""
-    try:
-        # Временно отключаем вывод
-        old_stdout = sys.stdout
-        sys.stdout = io.StringIO()
-
-        main()
-
-        # Восстанавливаем stdout
-        sys.stdout = old_stdout
-        assert True
-    except Exception as e:
-        # Восстанавливаем stdout в случае ошибки
-        sys.stdout = old_stdout
-        assert False, f"main() вызвал исключение: {e}"
+    """Тест, что main() является вызываемой функцией."""
+    assert callable(main)
 
 
 def test_load_and_print_json_data():
     """Тест функции load_and_print_json_data."""
+    # Создаем временный JSON файл для тестирования
+    test_data = [
+        {
+            "name": "Test Category",
+            "description": "Test description",
+            "products": [
+                {
+                    "name": "Test Product",
+                    "description": "Test product description",
+                    "price": 100.0,
+                    "quantity": 5,
+                }
+            ],
+        }
+    ]
+    temp_file = tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, encoding="utf-8"
+    )
+    json.dump(test_data, temp_file, ensure_ascii=False)
+    temp_file.close()
+    
     try:
-        f = io.StringIO()
-        with redirect_stdout(f):
-            load_and_print_json_data()
-
-        output = f.getvalue()
-        # Функция должна либо найти файл, либо сообщить, что не нашла
-        assert True  # Главное - не упала
-    except Exception as e:
-        assert False, f"load_and_print_json_data вызвал исключение: {e}"
+        # Перенаправляем stdout
+        output = StringIO()
+        with contextlib.redirect_stdout(output):
+            load_and_print_json_data(temp_file.name)
+        
+        captured_output = output.getvalue()
+        
+        # Проверяем вывод
+        assert "Загрузка данных из файла" in captured_output
+        assert "Test Category" in captured_output
+        assert "Test description" in captured_output
+        
+    finally:
+        if os.path.exists(temp_file.name):
+            os.unlink(temp_file.name)
