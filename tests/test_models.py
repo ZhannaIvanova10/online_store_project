@@ -15,8 +15,6 @@ def test_product_initialization():
     assert product.description == "Описание"
     assert product.price == 100.50
     assert product.quantity == 5
-
-
 def test_category_initialization():
     """Тест корректности инициализации объекта Category."""
     product1 = Product("Товар 1", "Описание 1", 100, 2)
@@ -26,10 +24,12 @@ def test_category_initialization():
 
     assert category.name == "Тестовая категория"
     assert category.description == "Описание"
-    assert len(category.products) == 2
-    assert isinstance(category.products[0], Product)
-
-
+    # products теперь строка, проверяем содержимое
+    products_str = category.products
+    assert "Товар 1" in products_str
+    assert "Товар 2" in products_str
+    assert "100 руб." in products_str
+    assert "200 руб." in products_str
 def test_category_count():
     """Тест подсчета количества категорий."""
     # Сбрасываем счетчик для чистоты теста
@@ -44,7 +44,6 @@ def test_category_count():
 
     category2 = Category("Категория 2", "Описание", [product2])
     assert Category.category_count == 2
-
 
 def test_product_count():
     """Тест подсчета количества товаров."""
@@ -61,8 +60,6 @@ def test_product_count():
 
     category2 = Category("Категория 2", "Описание", [product3])
     assert Category.product_count == 3
-
-
 def test_empty_category():
     """Тест создания категории без товаров."""
     Category.category_count = 0
@@ -71,6 +68,6 @@ def test_empty_category():
     category = Category("Пустая категория", "Описание", [])
 
     assert category.name == "Пустая категория"
-    assert len(category.products) == 0
+    assert category.products == ""  # Пустая строка
     assert Category.category_count == 1
     assert Category.product_count == 0
