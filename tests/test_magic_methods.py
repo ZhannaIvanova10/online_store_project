@@ -31,6 +31,7 @@ def test_category_str():
     assert "Гаджеты и устройства" in str_repr
     assert "Телефон" in str_repr
     assert "50000" in str_repr
+
 def test_category_total_quantity():
     """Тест вычисления общего количества товаров в категории."""
     products = [
@@ -64,9 +65,8 @@ def test_product_add_type_error():
         result = product + "не строка"
         assert False, "Должно было возникнуть TypeError"
     except TypeError as e:
-        assert "Можно складывать только объекты класса Product" in str(e)
-
-
+        # Проверяем новое сообщение об ошибке
+        assert "Нельзя складывать товары разных типов" in str(e)
 def test_products_getter_uses_str():
     """Тест, что геттер products использует __str__ товаров."""
     products = [
@@ -92,10 +92,10 @@ def test_category_iterator():
         Product("Товар 3", "Описание 3", 300, 3),
     ]
     category = Category("Категория", "Описание", products)
-    
     # Проверяем, что можно итерироваться по категории
     iterated_products = list(category)
     assert len(iterated_products) == 3
+    
     # Проверяем, что итерация возвращает оригинальные товары
     for i, product in enumerate(category):
         assert product.name == f"Товар {i + 1}"
@@ -142,7 +142,7 @@ def test_category_str_edge_cases():
     assert "Пустая" in empty_str
     assert "Нет товаров" in empty_str
     
-    # Категория с одним товаром
+    # Категория с одним товар
     single_product = Product("Единственный", "Товар", 100, 1)
     single_category = Category("Одна", "Категория", [single_product])
     single_str = str(single_category)
