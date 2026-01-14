@@ -7,11 +7,11 @@ import json
 
 class Product:
     """Класс товара."""
-    
+
     def __init__(self, name, description, price, quantity):
         """
         Инициализация товара.
-        
+
         Args:
             name: Название товара
             description: Описание товара
@@ -22,32 +22,92 @@ class Product:
         self.description = description
         self.price = price
         self.quantity = quantity
-    
+
     def __str__(self):
         """Строковое представление товара."""
         return f"{self.name} - {self.price} руб. [Остаток: {self.quantity} шт.]"
+    
     def __add__(self, other):
         """
         Сложение товаров.
-        
+
         Возвращает общую стоимость товаров.
+        Только товары одного типа можно складывать.
         """
-        if not isinstance(other, Product):
-            raise TypeError("Можно складывать только объекты класса Product")
+        if type(self) != type(other):
+            raise TypeError(f"Нельзя складывать товары разных типов: {type(self).__name__} и {type(other).__name__}")
         return self.price * self.quantity + other.price * other.quantity
+
+
+class Smartphone(Product):
+    """Класс Смартфон, наследник Product."""
+    
+    def __init__(self, name, description, price, quantity, 
+                 efficiency, model, memory, color):
+        """
+        Инициализация смартфона.
+
+        Args:
+            name: Название товара
+            description: Описание товара
+            price: Цена товара
+            quantity: Количество товара
+            efficiency: Производительность
+            model: Модель
+            memory: Объем встроенной памяти (ГБ)
+            color: Цвет
+        """
+        super().__init__(name, description, price, quantity)
+        self.efficiency = efficiency
+        self.model = model
+        self.memory = memory
+        self.color = color
+    
+    def __str__(self):
+        """Строковое представление смартфона."""
+        return (f"{self.name} ({self.model}) - {self.price} руб. "
+                f"[Остаток: {self.quantity} шт., Память: {self.memory}ГБ]")
+
+
+class LawnGrass(Product):
+    """Класс Трава газонная, наследник Product."""
+    
+    def __init__(self, name, description, price, quantity,
+                 country, germination_period, color):
+        """
+        Инициализация травы газонной.
+
+        Args:
+            name: Название товара
+            description: Описание товара
+            price: Цена товара
+            quantity: Количество товара
+            country: Страна-производитель
+            germination_period: Срок прорастания (дней)
+            color: Цвет
+        """
+        super().__init__(name, description, price, quantity)
+        self.country = country
+        self.germination_period = germination_period
+        self.color = color
+    
+    def __str__(self):
+        """Строковое представление травы газонной."""
+        return (f"{self.name} - {self.price} руб. "
+                f"[Остаток: {self.quantity} шт., Страна: {self.country}]")
 
 
 class Category:
     """Класс категории товаров."""
-    
+
     # Статические атрибуты для подсчета
     category_count = 0
     product_count = 0
-    
+
     def __init__(self, name, description, products):
         """
         Инициализация категории.
-        
+
         Args:
             name: Название категории
             description: Описание категории
@@ -55,71 +115,27 @@ class Category:
         """
         self.name = name
         self.description = description
-        self._products = products  # приватный атрибут
-        # Обновляем счетчики
+        self.products = products if products else []
         Category.category_count += 1
-        Category.product_count += len(products)
+        Category.product_count += len(self.products)
     
-    @property
-    def products(self):
-        """Геттер для получения строкового представления товаров."""
-        if not self._products:
-            return ""
+    def add_product(self, product):
+        """
+        Добавляет товар в категорию.
+
+        Args:
+            product: Объект товара для добавления
         
-        products_str = "\n".join(str(product) for product in self._products)
-        return products_str
-    
-    @property
-    def total_quantity(self):
-        """Общее количество товаров в категории."""
-        return sum(product.quantity for product in self._products)
+        Raises:
+            TypeError: Если передан не объект Product или его наследник
+        """
+        # Используем isinstance для проверки, что объект является Product или его наследником
+        if not isinstance(product, Product):
+            raise TypeError("Можно добавлять только объекты класса Product или его наследников")
+        
+        self.products.append(product)
+        Category.product_count += 1
     
     def __str__(self):
         """Строковое представление категории."""
-        products_info = self.products
-        if products_info:
-            return f"{self.name} ({self.description})\n{products_info}"
-        else:
-            return f"{self.name} ({self.description}) - нет товаров"
-    def __iter__(self):
-        """Итератор по товарам категории."""
-        return iter(self._products)
-
-
-def load_categories_from_json(file_path):
-    """
-    Загружает категории из JSON файла.
-    
-    Args:
-        file_path: Путь к JSON файлу
-        
-    Returns:
-        Список объектов Category
-    """
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Файл {file_path} не найден")
-    except json.JSONDecodeError as e:
-        raise json.JSONDecodeError(f"Ошибка декодирования JSON: {e}", e.doc, e.pos)
-    categories = []
-    for category_data in data:
-        products = []
-        for product_data in category_data.get('products', []):
-            product = Product(
-                name=product_data['name'],
-                description=product_data['description'],
-                price=product_data['price'],
-                quantity=product_data['quantity']
-            )
-            products.append(product)
-        
-        category = Category(
-            name=category_data['name'],
-            description=category_data['description'],
-            products=products
-        )
-        categories.append(category)
-    
-    return categories
+        return f"{self.name}: {len(self.products)} товаров"
