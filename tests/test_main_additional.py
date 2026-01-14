@@ -17,11 +17,12 @@ from src.models import Category, Product
 def test_create_sample_data():
     """Тест функции создания тестовых данных."""
     cat1, cat2 = create_sample_data()
-
     assert cat1.name == "Смартфоны"
     assert cat2.name == "Аксессуары"
-    assert len(cat1.products) == 2
-    assert len(cat2.products) == 1
+    # Проверяем содержимое строк products
+    assert "iPhone 15" in cat1.products
+    assert "Samsung Galaxy S24" in cat1.products
+    assert "Наушники Sony" in cat2.products
     assert Category.category_count >= 2
 
 
@@ -40,7 +41,6 @@ def test_print_store_info():
         print_store_info(cat1, cat2)
 
     output = f.getvalue()
-
     # Проверяем ключевые элементы вывода
     assert "ИНФОРМАЦИЯ О МАГАЗИНЕ" in output
     assert "Category1" in output

@@ -21,7 +21,6 @@ def test_product_str_representation():
     assert product.description == "Description"
     assert product.price == 100.0
     assert product.quantity == 5
-
     # Проверяем, что объект можно преобразовать в строку
     str_repr = str(product)
     assert str_repr is not None
@@ -34,9 +33,10 @@ def test_category_str_representation():
 
     assert category.name == "Test Category"
     assert category.description == "Description"
-    assert len(category.products) == 1
-    # Проверяем доступ к продуктам
-    assert category.products[0].name == "Test"
+    # products теперь строка
+    products_str = category.products
+    assert "Test" in products_str
+    assert "50 руб." in products_str
 
 
 def test_category_with_multiple_products():
@@ -46,10 +46,13 @@ def test_category_with_multiple_products():
         Product("P2", "D2", 20, 2),
         Product("P3", "D3", 30, 3),
     ]
-
     category = Category("Multi", "Multi products", products)
 
-    assert len(category.products) == 3
+    # Проверяем содержимое строки
+    products_str = category.products
+    assert "P1" in products_str
+    assert "P2" in products_str
+    assert "P3" in products_str
     assert Category.product_count >= 3
 
 
@@ -85,12 +88,13 @@ def test_load_categories_edge_cases():
 
         categories = load_categories_from_json(temp_file.name)
         assert len(categories) == 1
-        assert len(categories[0].products) == 1
-        assert categories[0].products[0].name == "Single Product"
+        # products теперь строка
+        products_str = categories[0].products
+        assert "Single Product" in products_str
+        assert "100.0 руб." in products_str
     finally:
         if os.path.exists(temp_file.name):
             os.unlink(temp_file.name)
-
     # Тест 2: Пустой список категорий
     data2 = []
 
