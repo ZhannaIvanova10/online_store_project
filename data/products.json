@@ -1,0 +1,49 @@
+[
+  {
+    "name": "Электроника",
+    "description": "Электронные устройства",
+    "products": [
+      {
+        "name": "iPhone 15 Pro",
+        "description": "Смартфон Apple",
+        "price": 99999,
+        "quantity": 10,
+        "type": "smartphone",
+        "performance": "A16 Bionic",
+        "model": "iPhone 15 Pro",
+        "memory": 256,
+        "color": "Black"
+      },
+      {
+        "name": "Наушники Sony",
+        "description": "Беспроводные наушники",
+        "price": 12000,
+        "quantity": 25,
+        "type": "product"
+      }
+    ]
+  },
+  {
+    "name": "Сад и огород",
+    "description": "Товары для сада и огорода",
+    "products": [
+      {
+        "name": "Газонная трава Премиум",
+        "description": "Качественная газонная трава",
+        "price": 1500,
+        "quantity": 100,
+        "type": "lawn_grass",
+        "country": "Россия",
+        "germination_period": "14 дней",
+        "color": "Зеленый"
+      },
+      {
+        "name": "Лейка садовая",
+        "description": "Пластиковая лейка 10л",
+        "price": 800,
+        "quantity": 40,
+        "type": "product"
+      }
+    ]
+  }
+]
