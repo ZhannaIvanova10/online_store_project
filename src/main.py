@@ -9,7 +9,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from .models import (BaseProduct, Product, Smartphone, LawnGrass, 
-                     Category, LoggingMixin, ZeroQuantityError, 
+                     Category, LoggingMixin, 
                      load_categories_from_json, OrderItem)
 
 
@@ -73,21 +73,21 @@ def demonstrate_exceptions():
     except Exception as e:
         print(f"ОШИБКА: {e}")
     
-    print("\n5. Дополнительное задание: пользовательское исключение ZeroQuantityError:")
+    print("\n5. Дополнительное задание: пользовательское исключение :")
     print("-" * 50)
     
     try:
         print("Создаем OrderItem с quantity=0...")
         order_item = OrderItem(good_product, 0)
         print("ОШИБКА: Заказ не должен был быть создан")
-    except ZeroQuantityError as e:
-        print(f"[OK] Поймано пользовательское исключение ZeroQuantityError: {e}")
+    except  as e:
+        print(f"[OK] Поймано пользовательское исключение : {e}")
     
     print("\nСоздаем OrderItem с корректным количеством...")
     try:
         order_item = OrderItem(good_product, 3)
         print(f"[OK] Заказ создан: {order_item}")
-    except ZeroQuantityError as e:
+    except  as e:
         print(f"ОШИБКА: {e}")
     print("\n6. Добавление товара с нулевым количеством через add_product:")
     print("-" * 50)
@@ -101,8 +101,8 @@ def demonstrate_exceptions():
         temp_product.quantity = 0
         category.add_product(temp_product)
         print("ОШИБКА: Товар не должен был быть добавлен")
-    except ZeroQuantityError as e:
-        print(f"[OK] Поймано ZeroQuantityError: {e}")
+    except  as e:
+        print(f"[OK] Поймано : {e}")
 
 
 def create_sample_data():

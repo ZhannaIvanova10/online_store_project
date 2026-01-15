@@ -189,7 +189,7 @@ class Category:
     category_count = 0
     product_count = 0
     
-    def __init__(self, name, description, products):
+    def __init__(self, name, description, products=None):
         """
         Инициализация категории.
         
@@ -220,7 +220,7 @@ class Category:
         self.products.append(product)
         Category.product_count += 1
     
-    def get_average_price(self):
+    def calculate_average_price(self):
         """
         ЗАДАНИЕ 2: Возвращает среднюю цену товаров в категории.
         
@@ -236,6 +236,10 @@ class Category:
             return 0
         except Exception:
             return 0
+    def __len__(self):
+        """Возвращает общее количество товаров в категории."""
+        return sum(product.quantity for product in self.products)
+        
     def __str__(self):
         """Строковое представление категории."""
         return f"{self.name}, количество продуктов: {len(self.products)} шт."
