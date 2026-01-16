@@ -1,69 +1,54 @@
-"""Тест загрузки JSON."""
-import sys
-import os
+#!/usr/bin/env python3
+"""
+Тест загрузки данных из JSON.
+"""
 
+import sys
+import io
+import json
+
+# Устанавливаем UTF-8 кодировку для Windows
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+# Проверяем импорт
 print("="*60)
 print("ТЕСТ ЗАГРУЗКИ ДАННЫХ ИЗ JSON")
 print("="*60)
 
-# Добавляем src в путь
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
 try:
-    from models import load_categories_from_json
-    print("✅ Модуль загружен успешно")
+    from src.models import load_categories_from_json
+    print("[OK] Модуль загружен успешно")
 except ImportError as e:
-    print(f"❌ Ошибка импорта: {e}")
+    print(f"[FAIL] Ошибка импорта: {e}")
     sys.exit(1)
 # Проверяем существование файла
+import os
 if os.path.exists("test_data.json"):
-    print("✅ Файл test_data.json найден")
-    
-    # Загружаем данные
+    print("[OK] Файл test_data.json найден")
+else:
+    print("[FAIL] Файл test_data.json не найден")
+    sys.exit(1)
+
+# Загружаем данные
+try:
     categories = load_categories_from_json("test_data.json")
-    
     print(f"\nЗагружено категорий: {len(categories)}")
     
-    if categories:
-        for i, category in enumerate(categories, 1):
-            print(f"\n{i}. Категория: {category.name}")
-            print(f"   Описание: {category.description}")
-            print(f"   Количество товаров: {len(category.products)}")
-            
-            for j, product in enumerate(category.products, 1):
-                print(f"   {j}. {product.name}")
-                print(f"      Цена: {product.price} руб.")
-                print(f"      Количество: {product.quantity} шт.")
-    else:
-        print("⚠️  Категории не загружены (возможно ошибка в файле)")
-else:
-    print("❌ Файл test_data.json не найден")
-    print("Создаем примерный файл...")
+    for category in categories:
+        print(f"\n{category.name}:")
+        print(f"  Описание: {category.description}")
+        print(f"  Товаров: {category.get_products_count()}")
+        print(f"  Средняя цена: {category.average_price():.2f} руб.")
+        
+        for product in category.products:
+            print(f"  - {product.name}: {product.price} руб. ({product.quantity} шт.)")
     
-    # Создаем примерный JSON
-    sample_data = {
-        "categories": [
-            {
-                "name": "Электроника",
-                "description": "Электронные устройства",
-                "products": [
-                    {
-                        "name": "Смартфон",
-                        "description": "Мощный смартфон",
-                        "price": 29999.99,
-                        "quantity": 10
-                    }
-                ]
-            }
-        ]
-    }
-    import json
-    with open("test_data.json", "w", encoding="utf-8") as f:
-        json.dump(sample_data, f, ensure_ascii=False, indent=2)
-    
-    print("✅ Файл test_data.json создан")
-    print("Запустите тест снова")
-
-print("\n" + "="*60)
-print("ТЕСТ ЗАВЕРШЕН")
-print("="*60)
+    print("\n" + "="*60)
+    print("ТЕСТ ЗАВЕРШЕН УСПЕШНО")
+    print("="*60)
+except Exception as e:
+    print(f"\n[FAIL] Ошибка при загрузке: {e}")
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)

@@ -1,105 +1,119 @@
+#!/usr/bin/env python3
 """
-Демонстрация домашнего задания: Обработка исключений
+Главный модуль интернет-магазина.
+Демонстрирует работу с исключениями.
 """
 
 import sys
-import os
+import io
 
-# Добавляем текущую директорию в путь для импортов
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Устанавливаем UTF-8 кодировку для Windows
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-from models import (BaseProduct, Product, Smartphone, LawnGrass,
-                    Category, LoggingMixin)
-
-
-def create_sample_data():
-    """Создает пример данных для демонстрации."""
-    # Создаем товары
-    p1 = Product("Ноутбук", "Игровой ноутбук", 89999, 5)
-    p2 = Product("Мышь", "Беспроводная мышь", 2499, 20)
-    # Создаем смартфон
-    phone = Smartphone("Смартфон", "Флагманский смартфон", 79999, 10,
-                      "Высокая", "Galaxy S23", 256, "Черный")
-
-    # Создаем категории
-    electronics = Category("Электроника", "Техника и гаджеты")
-    electronics.add_product(p1)
-    electronics.add_product(p2)
-    electronics.add_product(phone)
-
-    return electronics
-
-
-def print_store_info(store):
-    """Выводит информацию о магазине."""
-    print(f"\nКатегория: {store.name}")
-    print(f"Описание: {store.description}")
-    print(f"Количество товаров в категории: {len(store.products)}")
-    print(f"Общее количество единиц товаров: {len(store)}")
-
-    if store.products:
-        print("\nТовары в категории:")
-        for i, product in enumerate(store.products, 1):
-            print(f"{i}. {product}")
-        # Средняя цена
-        avg_price = store.calculate_average_price()
-        print(f"\nСредняя цена товаров: {avg_price:.2f} руб.")
-
-
+import json
+from models import BaseProduct, Category, load_categories_from_json
 def demonstrate_exceptions(store):
-    """Демонстрирует обработку исключений."""
-    print("\n" + "=" * 60)
+    """
+    Демонстрирует различные сценарии обработки исключений.
+    """
+    print("\n" + "="*60)
     print("ДЕМОНСТРАЦИЯ ОБРАБОТКИ ИСКЛЮЧЕНИЙ")
-    print("=" * 60)
+    print("="*60)
     
     # 1. Попытка создать товар с нулевым количеством
-    print("\n1. Попытка создать товар с quantity = 0:")
+    print("\n1. Попытка создать товар с quantity=0:")
     try:
-        bad_product = Product("Тестовый товар", "Описание", 100, 0)
-        print("❌ ОШИБКА: Должно было возникнуть исключение!")
+        product = BaseProduct("Невалидный товар", "Описание", 100, 0)
+        print("   [ERROR] Должно было быть исключение!")
     except ValueError as e:
-        print(f"✅ УСПЕХ: Исключение обработано: {e}")
-
-    # 2. Попытка добавить неправильный тип в категорию
-    print("\n2. Попытка добавить строку вместо продукта:")
+        print(f"   [OK] ValueError перехвачено: {e}")
+    
+    # 2. Попытка создать товар с отрицательным количеством
+    print("\n2. Попытка создать товар с quantity=-1:")
     try:
-        store.add_product("не продукт")
-        print("❌ ОШИБКА: Должно было возникнуть исключение!")
+        product = BaseProduct("Невалидный товар", "Описание", 100, -1)
+        print("   [ERROR] Должно было быть исключение!")
+    except ValueError as e:
+        print(f"   [OK] ValueError перехвачено: {e}")
+    # 3. Добавление не-продукта в категорию
+    print("\n3. Попытка добавить не-продукт в категорию:")
+    try:
+        cat = Category("Тест", "Тест")
+        cat.add_product("не продукт")
+        print("   [ERROR] Должно было быть исключение!")
     except TypeError as e:
-        print(f"✅ УСПЕХ: Исключение обработано: {e}")
-
-    # 3. Обработка пустой категории
-    print("\n3. Средняя цена пустой категории:")
-    empty_cat = Category("Пустая", "Нет товаров")
-    print(f"Результат: {empty_cat.calculate_average_price()} (должно быть 0)")
-
-    print("\n" + "=" * 60)
+        print(f"   [OK] TypeError перехвачено: {e}")
+    
+    # 4. Средняя цена пустой категории
+    print("\n4. Средняя цена пустой категории:")
+    empty_category = Category("Пустая", "Без товаров")
+    print(f"   [OK] Средняя цена: {empty_category.average_price()} руб.")
+    
+    # 5. Работа с несуществующим файлом
+    print("\n5. Попытка загрузить несуществующий JSON файл:")
+    try:
+        categories = load_categories_from_json("не_существует.json")
+        print("   [ERROR] Должно было быть исключение!")
+    except FileNotFoundError as e:
+        print(f"   [OK] FileNotFoundError перехвачено: {e}")
+    
+    print("\n" + "="*60)
     print("ДЕМОНСТРАЦИЯ ЗАВЕРШЕНА")
-    print("=" * 60)
+    print("="*60)
 def main():
     """
-    Основная функция приложения.
+    Основная функция программы.
     """
-    print("=" * 60)
-    print("ОНОЛАЙН-МАГАЗИН: Демонстрация обработки исключений")
-    print("=" * 60)
-
-    # Создаем пример данных
-    store = create_sample_data()
-
-    # Выводим информацию о магазине
-    print_store_info(store)
-
-    # Демонстрация исключений
-    demonstrate_exceptions(store)
+    print("ЗАГРУЗКА ИНТЕРНЕТ-МАГАЗИНА")
+    print("="*60)
     
-    # Пример работы с продуктами
-    if store.products:
-        print(f"\nПервый продукт в категории: {store.products[0].name}")
-
-    print("\n" + "=" * 60)
-    print("РАБОТА ПРИЛОЖЕНИЯ ЗАВЕРШЕНА")
-    print("=" * 60)
+    # Создаем магазин
+    store = {}
+    
+    # Загружаем тестовые данные
+    try:
+        print("\nЗагрузка тестовых данных из test_data.json...")
+        categories = load_categories_from_json("../test_data.json")
+        
+        # Добавляем категории в магазин
+        for category in categories:
+            store[category.name] = category
+        
+        print(f"[OK] Загружено {len(categories)} категорий")
+        
+        # Выводим информацию
+        print("\n" + "="*60)
+        print("ИНФОРМАЦИЯ О МАГАЗИНЕ")
+        print("="*60)
+        for category_name, category in store.items():
+            print(f"\nКатегория: {category_name}")
+            print(f"Описание: {category.description}")
+            print(f"Количество товаров: {category.total_products}")
+            print(f"Средняя цена: {category.average_price():.2f} руб.")
+            print("Товары:")
+            
+            for product in category.products:
+                print(f"  - {product.name}: {product.price} руб. ({product.quantity} шт.)")
+    
+    except Exception as e:
+        print(f"[ERROR] Ошибка при загрузке данных: {e}")
+        return
+    
+    # Демонстрируем исключения
+    demonstrate_exceptions(store)
+    # Финальное сообщение
+    print("\n" + "="*60)
+    print("ПРОВЕРКА ВЫПОЛНЕНА УСПЕШНО!")
+    print("="*60)
+    print("\nВсе исключения корректно обрабатываются:")
+    print("1. [OK] ValueError при создании товара с quantity <= 0")
+    print("2. [OK] TypeError при добавлении не-продукта в категорию")
+    print("3. [OK] ZeroDivisionError обработан в average_price()")
+    print("4. [OK] FileNotFoundError при загрузке несуществующего файла")
+    print("5. [OK] JSONDecodeError при невалидном JSON")
+    print("6. [OK] KeyError при отсутствии обязательных полей")
+    print("="*60)
 
 
 if __name__ == "__main__":

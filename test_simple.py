@@ -1,94 +1,145 @@
-"""Простейшие тесты."""
-import sys
-sys.path.insert(0, 'src')
+#!/usr/bin/env python3
+"""
+Простейшие тесты проекта интернет-магазина.
+"""
 
-def test_basics():
-    """Базовые тесты."""
-    from models import Product, Category
+import sys
+import io
+
+# Устанавливаем UTF-8 кодировку для Windows
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+from src.models import BaseProduct, Category
+
+
+def test_product_creation():
+    """Тест создания продукта."""
+    print("\n" + "="*60)
+    print("ТЕСТ СОЗДАНИЯ ПРОДУКТА")
+    print("="*60)
+    # Нормальное создание
+    try:
+        p = BaseProduct("Тест", "Описание", 100, 10)
+        print("[OK] Нормальное создание продукта")
+    except Exception as e:
+        print(f"[FAIL] Ошибка при нормальном создании: {e}")
+        return False
     
-    # 1. Нормальное создание продукта
-    p = Product("Тест", "Описание", 100, 5)
-    assert p.name == "Тест"
-    assert p.price == 100
-    assert p.quantity == 5
-    print("✅ Нормальное создание продукта")
-    # 2. Создание категории
-    c = Category("Категория", "Описание")
-    assert c.name == "Категория"
-    print("✅ Создание категории")
+    # Создание с quantity=0
+    try:
+        p = BaseProduct("Тест", "Описание", 100, 0)
+        print("[FAIL] Должно было быть исключение для quantity=0")
+        return False
+    except ValueError as e:
+        if "Товар с нулевым количеством не может быть добавлен" in str(e):
+            print("[OK] Исключение при quantity=0")
+        else:
+            print(f"[FAIL] Неправильное сообщение: {e}")
+            return False
     
-    # 3. Добавление продукта в категорию
-    c.add_product(p)
-    assert len(c.products) == 1
-    print("✅ Добавление продукта в категорию")
-    
-    # 4. Расчет средней цены
-    avg = c.calculate_average_price()
-    assert avg == 100.0
-    print("✅ Расчет средней цены")
-    # 5. Пустая категория
-    empty = Category("Пустая", "Нет товаров")
-    assert empty.calculate_average_price() == 0.0
-    print("✅ Средняя цена пустой категории")
-    
+    # Создание с quantity=-1
+    try:
+        p = BaseProduct("Тест", "Описание", 100, -1)
+        print("[FAIL] Должно было быть исключение для quantity=-1")
+        return False
+    except ValueError as e:
+        print("[OK] Исключение при quantity=-1")
     return True
 
-def test_exceptions():
-    """Тесты исключений."""
-    from models import Product, Category
+
+def test_category_operations():
+    """Тест операций с категорией."""
+    print("\n" + "="*60)
+    print("ТЕСТ ОПЕРАЦИЙ С КАТЕГОРИЕЙ")
+    print("="*60)
     
-    # 1. Исключение при quantity=0
+    # Создание категории
     try:
-        Product("Тест", "Описание", 100, 0)
-        print("❌ Должно было быть исключение для quantity=0")
+        cat = Category("Категория", "Описание")
+        print("[OK] Создание категории")
+    except Exception as e:
+        print(f"[FAIL] Ошибка при создании категории: {e}")
         return False
-    except ValueError:
-        print("✅ Исключение при quantity=0")
-    # 2. Исключение при отрицательном quantity
-    try:
-        Product("Тест", "Описание", 100, -1)
-        print("❌ Должно было быть исключение для quantity=-1")
-        return False
-    except ValueError:
-        print("✅ Исключение при quantity=-1")
     
-    # 3. Исключение при добавлении не-продукта
-    cat = Category("Тест", "Тест")
+    # Добавление продукта
     try:
-        cat.add_product("строка")
-        print("❌ Должно было быть исключение для не-продукта")
+        p = BaseProduct("Тест", "Описание", 100, 10)
+        cat.add_product(p)
+        print("[OK] Добавление продукта в категорию")
+    except Exception as e:
+        print(f"[FAIL] Ошибка при добавлении продукта: {e}")
+        return False
+    # Средняя цена
+    try:
+        avg = cat.average_price()
+        if avg == 100:
+            print("[OK] Расчет средней цены")
+        else:
+            print(f"[FAIL] Неправильная средняя цена: {avg}")
+            return False
+    except Exception as e:
+        print(f"[FAIL] Ошибка при расчете средней цены: {e}")
+        return False
+    
+    # Средняя цена пустой категории
+    try:
+        empty_cat = Category("Пустая", "Без товаров")
+        avg = empty_cat.average_price()
+        if avg == 0:
+            print("[OK] Средняя цена пустой категории")
+        else:
+            print(f"[FAIL] Неправильная средняя цена пустой категории: {avg}")
+            return False
+    except Exception as e:
+        print(f"[FAIL] Ошибка при расчете средней цены пустой категории: {e}")
+        return False
+    # Добавление не-продукта
+    try:
+        cat.add_product("не продукт")
+        print("[FAIL] Должно было быть исключение при добавлении не-продукта")
         return False
     except TypeError:
-        print("✅ Исключение при добавлении не-продукта")
+        print("[OK] Исключение при добавлении не-продукта")
+    
     return True
 
+
 def main():
-    """Основная функция."""
+    """Основная функция тестирования."""
     print("="*60)
     print("ПРОСТЕЙШИЕ ТЕСТЫ ПРОЕКТА")
     print("="*60)
     
-    results = []
-    try:
-        results.append(test_basics())
-    except Exception as e:
-        print(f"❌ Ошибка в базовых тестах: {e}")
-        results.append(False)
+    tests = [
+        ("Тест создания продукта", test_product_creation),
+        ("Тест операций с категорией", test_category_operations)
+    ]
+    passed = 0
+    total = len(tests)
     
-    try:
-        results.append(test_exceptions())
-    except Exception as e:
-        print(f"❌ Ошибка в тестах исключений: {e}")
-        results.append(False)
-    print("="*60)
-    print(f"Всего тестов: {len(results)}")
-    print(f"Пройдено: {sum(results)}")
+    for test_name, test_func in tests:
+        print(f"\n{test_name}:")
+        try:
+            if test_func():
+                passed += 1
+                print(f"[OK] {test_name} пройден")
+            else:
+                print(f"[FAIL] {test_name} не пройден")
+        except Exception as e:
+            print(f"[ERROR] Ошибка в тесте {test_name}: {e}")
     
-    if all(results):
-        print("✅ ВСЕ ТЕСТЫ ПРОЙДЕНЫ!")
+    print("\n" + "="*60)
+    print(f"Всего тестов: {total}")
+    print(f"Пройдено: {passed}")
+    
+    if passed == total:
+        print("[OK] ВСЕ ТЕСТЫ ПРОЙДЕНЫ!")
     else:
-        print("❌ ЕСТЬ НЕПРОЙДЕННЫЕ ТЕСТЫ")
+        print(f"[FAIL] Не пройдено тестов: {total - passed}")
+    
     print("="*60)
-
+    return passed == total
 if __name__ == "__main__":
-    main()
+    success = main()
+    sys.exit(0 if success else 1)
