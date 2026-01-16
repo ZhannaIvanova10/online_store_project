@@ -1,5 +1,9 @@
+"""
+Дополнительные тесты для специфичных классов.
+"""
 import pytest
-from src.models import Smartphone, LawnGrass, Category
+from models import Smartphone, LawnGrass, Category
+
 
 def test_smartphone_creation():
     """Тест создания смартфона."""
@@ -17,6 +21,8 @@ def test_smartphone_creation():
     assert phone.model == "15 Pro"
     assert phone.memory == 256
     assert phone.color == "Black"
+
+
 def test_smartphone_str():
     """Тест строкового представления смартфона."""
     phone = Smartphone(
@@ -32,7 +38,6 @@ def test_smartphone_str():
     assert "iPhone" in str(phone)
     assert "15 Pro" in str(phone)
     assert "256" in str(phone)
-
 def test_lawn_grass_creation():
     """Тест создания газонной травы."""
     grass = LawnGrass(
@@ -48,7 +53,6 @@ def test_lawn_grass_creation():
     assert grass.country == "Россия"
     assert grass.germination_period == "14 дней"
     assert grass.color == "Зеленый"
-
 def test_category_add_smartphone():
     """Тест добавления смартфона в категорию."""
     cat = Category("Электроника", "Техника")
@@ -80,10 +84,10 @@ def test_category_add_lawn_grass():
     cat.add_product(grass)
     assert cat.total_products == 1
     assert grass in cat.products
-
 def test_logging_mixin():
     """Тест миксина логирования."""
-    from src.models import LoggingMixin
+    from models import LoggingMixin
+    
     class TestClass(LoggingMixin):
         pass
     
