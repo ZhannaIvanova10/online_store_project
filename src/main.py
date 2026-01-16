@@ -4,99 +4,103 @@
 
 import sys
 import os
-import json
-from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Добавляем текущую директорию в путь для импортов
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-try:
-    from models import (BaseProduct, Product, Smartphone, LawnGrass,
-                        Category, LoggingMixin)
-    print("=" * 60)
-    print("ДЕМОНСТРАЦИЯ: Обработка исключений в интернет-магазине")
+from models import (BaseProduct, Product, Smartphone, LawnGrass,
+                    Category, LoggingMixin)
+
+
+def create_sample_data():
+    """Создает пример данных для демонстрации."""
+    # Создаем товары
+    p1 = Product("Ноутбук", "Игровой ноутбук", 89999, 5)
+    p2 = Product("Мышь", "Беспроводная мышь", 2499, 20)
+    # Создаем смартфон
+    phone = Smartphone("Смартфон", "Флагманский смартфон", 79999, 10,
+                      "Высокая", "Galaxy S23", 256, "Черный")
+
+    # Создаем категории
+    electronics = Category("Электроника", "Техника и гаджеты")
+    electronics.add_product(p1)
+    electronics.add_product(p2)
+    electronics.add_product(phone)
+
+    return electronics
+
+
+def print_store_info(store):
+    """Выводит информацию о магазине."""
+    print(f"\nКатегория: {store.name}")
+    print(f"Описание: {store.description}")
+    print(f"Количество товаров в категории: {len(store.products)}")
+    print(f"Общее количество единиц товаров: {len(store)}")
+
+    if store.products:
+        print("\nТовары в категории:")
+        for i, product in enumerate(store.products, 1):
+            print(f"{i}. {product}")
+        # Средняя цена
+        avg_price = store.calculate_average_price()
+        print(f"\nСредняя цена товаров: {avg_price:.2f} руб.")
+
+
+def demonstrate_exceptions(store):
+    """Демонстрирует обработку исключений."""
+    print("\n" + "=" * 60)
+    print("ДЕМОНСТРАЦИЯ ОБРАБОТКИ ИСКЛЮЧЕНИЙ")
     print("=" * 60)
     
-    # Задание 1: Проверка нулевого количества
-    print("\n1. ЗАДАНИЕ 1: Проверка нулевого количества товара")
-    print("Попытка создать товар с quantity = 0:")
+    # 1. Попытка создать товар с нулевым количеством
+    print("\n1. Попытка создать товар с quantity = 0:")
     try:
         bad_product = Product("Тестовый товар", "Описание", 100, 0)
         print("❌ ОШИБКА: Должно было возникнуть исключение!")
     except ValueError as e:
         print(f"✅ УСПЕХ: Исключение обработано: {e}")
-    # Создание нормальных товаров
-    print("\nСоздание нормальных товаров:")
+
+    # 2. Попытка добавить неправильный тип в категорию
+    print("\n2. Попытка добавить строку вместо продукта:")
     try:
-        p1 = Product("Товар 1", "Описание 1", 100, 10)
-        p2 = Product("Товар 2", "Описание 2", 200, 5)
-        print(f"✅ Созданы: {p1.name}, {p2.name}")
-    except Exception as e:
-        print(f"❌ ОШИБКА: {e}")
-    
-    # Задание 2: Средняя цена в категории
-    print("\n2. ЗАДАНИЕ 2: Метод calculate_average_price()")
-    
-    # Пустая категория
-    empty_cat = Category("Пустая категория", "Нет товаров")
-    avg_empty = empty_cat.calculate_average_price()
-    print(f"Средняя цена в пустой категории: {avg_empty} (ожидается: 0)")
-    
-    # Категория с товарами
-    cat = Category("Электроника", "Техника")
-    cat.add_product(p1)
-    cat.add_product(p2)
-    avg_with_items = cat.calculate_average_price()
-    print(f"Средняя цена в категории с товарами: {avg_with_items} (ожидается: 150.0)")
-    # Проверка
-    if avg_empty == 0 and abs(avg_with_items - 150.0) < 0.01:
-        print("✅ ЗАДАНИЕ 2 ВЫПОЛНЕНО КОРРЕКТНО")
-    else:
-        print("❌ ПРОБЛЕМА С ЗАДАНИЕМ 2")
-    
-    # Дополнительная демонстрация
-    print("\n3. ДОПОЛНИТЕЛЬНО: Другие проверки")
-    
-    # Проверка добавления неправильного типа
-    print("Попытка добавить строку вместо продукта в категорию:")
-    try:
-        cat.add_product("не продукт")
+        store.add_product("не продукт")
         print("❌ ОШИБКА: Должно было возникнуть исключение!")
     except TypeError as e:
         print(f"✅ УСПЕХ: Исключение обработано: {e}")
-    # Создание смартфона (наследник Product)
-    print("\nСоздание смартфона (наследник Product):")
-    try:
-        phone = Smartphone("Смартфон", "Описание", 50000, 5, 
-                          "Высокая", "Модель X", 256, "Черный")
-        print(f"✅ УСПЕХ: Создан {phone.name}")
-        cat.add_product(phone)
-        print(f"✅ Смартфон добавлен в категорию")
-    except Exception as e:
-        print(f"❌ ОШИБКА: {e}")
-    
-    # Создание газонной травы
-    print("\nСоздание газонной травы (наследник Product):")
-    try:
-        grass = LawnGrass("Газонная трава", "Для сада", 1500, 100,
-                         "Россия", "14 дней", "Зеленый")
-        print(f"✅ УСПЕХ: Создана {grass.name}")
-    except Exception as e:
-        print(f"❌ ОШИБКА: {e}")
-    # Демонстрация LoggingMixin
-    print("\n4. Логирование (LoggingMixin):")
-    try:
-        test_product = Product("Тест логирования", "Для демонстрации", 500, 3)
-        print("✅ LoggingMixin работает (сообщение выше)")
-    except Exception as e:
-        print(f"❌ ОШИБКА с LoggingMixin: {e}")
-    
+
+    # 3. Обработка пустой категории
+    print("\n3. Средняя цена пустой категории:")
+    empty_cat = Category("Пустая", "Нет товаров")
+    print(f"Результат: {empty_cat.calculate_average_price()} (должно быть 0)")
+
     print("\n" + "=" * 60)
-    print("ВСЕ ЗАДАНИЯ ВЫПОЛНЕНЫ:")
-    print("1. ✅ Проверка нулевого количества - ВЫПОЛНЕНО")
-    print("2. ✅ Средняя цена с обработкой исключений - ВЫПОЛНЕНО")
-    print("3. ✅ Демонстрация и тестирование - ВЫПОЛНЕНО")
+    print("ДЕМОНСТРАЦИЯ ЗАВЕРШЕНА")
     print("=" * 60)
+def main():
+    """
+    Основная функция приложения.
+    """
+    print("=" * 60)
+    print("ОНОЛАЙН-МАГАЗИН: Демонстрация обработки исключений")
+    print("=" * 60)
+
+    # Создаем пример данных
+    store = create_sample_data()
+
+    # Выводим информацию о магазине
+    print_store_info(store)
+
+    # Демонстрация исключений
+    demonstrate_exceptions(store)
     
-except ImportError as e:
-    print(f"❌ Ошибка импорта: {e}")
-    print("Проверьте наличие файла models.py и его содержимое")
+    # Пример работы с продуктами
+    if store.products:
+        print(f"\nПервый продукт в категории: {store.products[0].name}")
+
+    print("\n" + "=" * 60)
+    print("РАБОТА ПРИЛОЖЕНИЯ ЗАВЕРШЕНА")
+    print("=" * 60)
+
+
+if __name__ == "__main__":
+    main()

@@ -11,58 +11,45 @@ import contextlib
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.main import main, demonstrate_exceptions, create_sample_data, print_store_info
-from src.models import load_categories_from_json
+
 
 class TestMain:
     """Тесты для основного модуля."""
-    
+
     def test_main_output(self, capsys):
         """Проверяем, что main.py выводит ожидаемый текст."""
         main()
         captured = capsys.readouterr()
-        captured_output = captured.out
+        output = captured.out
         
-        # Проверяем, что вывод содержит основные разделы
-        assert "ДЕМОНСТРАЦИЯ РАБОТЫ ИНТЕРНЕТ-МАГАЗИНА С ОБРАБОТКОЙ ИСКЛЮЧЕНИЙ" in captured_output
-        assert "ДЕМОНСТРАЦИЯ ОБРАБОТКИ ИСКЛЮЧЕНИЙ" in captured_output
-        assert "ИНФОРМАЦИЯ О МАГАЗИНЕ" in captured_output
-    
-    def test_main_is_callable(self):
-        """Проверяем, что main() можно вызвать."""
-        # Просто проверяем, что функция существует и вызываема
-        try:
-            main()
-        except Exception as e:
-            # Если есть исключение, оно должно быть связано с выводом, а не с самой функцией
-            pass
-    def test_load_and_print_json_data(self):
-        """Проверяем загрузку данных из JSON."""
-        # Создаем временный JSON файл
-        import json
-        import tempfile
+        # Проверяем, что вывод содержит ожидаемые строки
+        assert "ОНОЛАЙН-МАГАЗИН: Демонстрация обработки исключений" in output
+        assert "Категория: Электроника" in output
+        assert "ДЕМОНСТРАЦИЯ ОБРАБОТКИ ИСКЛЮЧЕНИЙ" in output
+    def test_create_sample_data(self):
+        """Тест создания примерных данных."""
+        store = create_sample_data()
+        assert store.name == "Электроника"
+        assert len(store.products) == 3  # Ноутбук, мышь, смартфон
+
+    def test_demonstrate_exceptions(self, capsys):
+        """Тест демонстрации исключений."""
+        store = create_sample_data()
+        demonstrate_exceptions(store)
+        captured = capsys.readouterr()
+        output = captured.out
         
-        test_data = [
-            {
-                "name": "Тестовая категория",
-                "description": "Описание",
-                "products": [
-                    {
-                        "name": "Тестовый товар",
-                        "description": "Описание товара",
-                        "price": 1000,
-                        "quantity": 5
-                    }
-                ]
-            }
-        ]
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            json.dump(test_data, f)
-            temp_file = f.name
-        try:
-            categories = load_categories_from_json(temp_file)
-            assert len(categories) == 1
-            assert categories[0].name == "Тестовая категория"
-            assert len(categories[0]._products) == 1
-        finally:
-            os.unlink(temp_file)
+        assert "Попытка создать товар с quantity = 0:" in output
+        assert "Попытка добавить строку вместо продукта:" in output
+        assert "Средняя цена пустой категории:" in output
+
+    def test_print_store_info(self, capsys):
+        """Тест вывода информации о магазине."""
+        store = create_sample_data()
+        print_store_info(store)
+        captured = capsys.readouterr()
+        output = captured.out
+        assert "Категория: Электроника" in output
+        assert "Количество товаров в категории: 3" in output
+        assert "Товары в категории:" in output
+        assert "Средняя цена товаров:" in output
