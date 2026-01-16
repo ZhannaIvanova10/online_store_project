@@ -1,12 +1,10 @@
+# Временные/странные файлы
+*.tmp
+*.temp
+*.log
+*===*
+
+# Директории
+templates/
 __pycache__/
 *.pyc
-.pytest_cache/
-.coverage
-htmlcov/
-.venv/
-.poetry/
-.DS_Store
-venv/
-.idea/
-.vscode/
-*.log
