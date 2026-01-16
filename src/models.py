@@ -1,17 +1,77 @@
 """
 Модели данных для интернет-магазина.
 """
-
 import json
-from pathlib import Path
+import os
 
 
 class BaseProduct:
-    """Базовый класс для всех товаров."""
-
+    """Базовый класс товара."""
+    
     def __init__(self, name: str, description: str, price: float, quantity: int):
         """
-        Инициализация базового продукта.
+        Инициализация товара.
+        Args:
+            name: Название товара
+            description: Описание товара
+            price: Цена товара
+            quantity: Количество товара
+            
+        Raises:
+            ValueError: Если количество <= 0
+        """
+        if quantity <= 0:
+            raise ValueError("Товар с нулевым количеством не может быть добавлен")
+        
+        self.name = name
+        self.description = description
+        self.price = price
+        self.quantity = quantity
+        
+    def __str__(self):
+        return f"{self.name}: {self.price} руб. ({self.quantity} шт.)"
+class Category:
+    """Класс категории товаров."""
+    
+    def __init__(self, name: str, description: str):
+        self.name = name
+        self.description = description
+        self.__products = []
+        
+    def add_product(self, product: BaseProduct):
+        """Добавить товар в категорию."""
+        self.__products.append(product)
+        print(f"[LOG] Добавлен продукт '{product.name}' в категорию '{self.name}'")
+        
+    def __str__(self):
+        products_list = "\n".join([f"  - {product}" for product in self.__products])
+        return f"Категория: {self.name}\nОписание: {self.description}\nТовары:\n{products_list}"
+    
+    @property
+    def products(self):
+        """Возвращает список товаров."""
+        return [str(product) for product in self.__products]
+    def average_price(self):
+        """
+        Возвращает среднюю цену товаров в категории.
+        
+        Returns:
+            Средняя цена или 0, если товаров нет.
+        """
+        try:
+            total_price = sum(product.price for product in self.__products)
+            return total_price / len(self.__products)
+        except ZeroDivisionError:
+            return 0
+
+
+class Product(BaseProduct):
+    """Класс товара."""
+    
+    def __init__(self, name: str, description: str, price: float, quantity: int):
+        """
+        Инициализация товара.
+        
         Args:
             name: Название товара
             description: Описание товара
@@ -20,151 +80,13 @@ class BaseProduct:
         Raises:
             ValueError: Если количество <= 0
         """
+        # Явно проверяем quantity перед вызовом родительского конструктора
         if quantity <= 0:
             raise ValueError("Товар с нулевым количеством не может быть добавлен")
-
-        self.name = name
-        self.description = description
-        self.price = price
-        self.quantity = quantity
-
-    def __str__(self):
-        return f"{self.name} - {self.price} руб. (Осталось: {self.quantity})"
-
-
-class Product(BaseProduct):
-    """Класс для обычных товаров."""
-
-    def __init__(self, name: str, description: str, price: float, quantity: int):
-        super().__init__(name, description, price, quantity)
-
-
-class Smartphone(Product):
-    """Класс для смартфонов."""
-    def __init__(self, name: str, description: str, price: float, quantity: int,
-                 performance: str, model: str, memory: int, color: str):
-        super().__init__(name, description, price, quantity)
-        self.performance = performance
-        self.model = model
-        self.memory = memory
-        self.color = color
-
-    def __str__(self):
-        return f"{self.name} {self.model} - {self.price} руб., {self.memory}ГБ, {self.color}"
-
-
-class LawnGrass(Product):
-    """Класс для газонной травы."""
-
-    def __init__(self, name: str, description: str, price: float, quantity: int,
-                 country: str, germination_period: str, color: str):
-        super().__init__(name, description, price, quantity)
-        self.country = country
-        self.germination_period = germination_period
-        self.color = color
-
-class LoggingMixin:
-    """Миксин для логирования."""
-    def log(self, message: str):
-        print(f"[LOG] {message}")
-
-
-class Category(LoggingMixin):
-    """Класс для категорий товаров."""
-
-    def __init__(self, name: str, description: str):
-        self.name = name
-        self.description = description
-        self.products = []
-
-    def add_product(self, product):
-        """Добавляет продукт в категорию."""
-        if not isinstance(product, (Product, Smartphone, LawnGrass, BaseProduct)):
-            raise TypeError(f"Ожидается объект Product, получен {type(product)}")
-
-        self.products.append(product)
-        self.log(f"Добавлен продукт '{product.name}' в категорию '{self.name}'")
-
-    def average_price(self) -> float:
-        """
-        Вычисляет среднюю цену товаров в категории.
-        Возвращает 0, если в категории нет товаров.
-        """
-        try:
-            if not self.products:
-                return 0.0
-            total_price = sum(product.price for product in self.products)
-            return total_price / len(self.products)
-        except ZeroDivisionError:
-            return 0.0
-
-    @property
-    def total_products(self):
-        """Количество товаров в категории."""
-        return len(self.products)
-
-    def __len__(self):
-        """Возвращает общее количество товаров в категории."""
-        return len(self.products)
-
-    def __str__(self):
-        return f"{self.name}, количество продуктов: {len(self)}"
-    def __contains__(self, item):
-        """Проверяет, есть ли продукт в категории."""
-        return item in self.products
-
-
-def load_categories_from_json(file_path: str) -> list[Category]:
-    """
-    Загружает категории из JSON файла.
-    
-    Args:
-        file_path: Путь к JSON файлу
         
-    Returns:
-        list[Category]: Список загруженных категорий
-        
-    Raises:
-        FileNotFoundError: Если файл не найден
-        json.JSONDecodeError: Если JSON невалидный
-        KeyError: Если отсутствуют обязательные поля
-        ValueError: Если данные товара невалидны
-    """
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Файл '{file_path}' не найден")
-    except json.JSONDecodeError as e:
-        raise json.JSONDecodeError(f"Ошибка в JSON файле: {e}", e.doc, e.pos)
-    
-    categories = []
-    
-    for category_data in data:
-        try:
-            name = category_data.get('name', 'Без названия')
-            description = category_data.get('description', '')
-            
-            category = Category(name, description)
-            
-            # Загружаем продукты
-            for product_data in category_data.get('products', []):
-                try:
-                    product = Product(
-                        name=product_data['name'],
-                        description=product_data.get('description', ''),
-                        price=float(product_data['price']),
-                        quantity=int(product_data['quantity'])
-                    )
-                    category.add_product(product)
-                except KeyError as e:
-                    print(f"Предупреждение: пропущен товар без обязательного поля {e}")
-                except ValueError as e:
-                    print(f"Предупреждение: пропущен невалидный товар: {e}")
-            
-            categories.append(category)
-            
-        except Exception as e:
-            print(f"Предупреждение: ошибка при создании категории: {e}")
-    
-    return categories
+        # Вызываем конструктор родительского класса
+        super().__init__(name, description, price, quantity)
+
+
+# Экспортируем классы
+__all__ = ['BaseProduct', 'Category', 'Product']
