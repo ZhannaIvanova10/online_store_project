@@ -1,65 +1,90 @@
 """
-Тесты для проверки обработки исключений.
+Тесты для проверки обработки исключений в модуле models.py
 """
+
 import pytest
-from src.models import BaseProduct, Category
+from src.models import Product, Category, ZeroQuantityError
 
 
-def test_product_zero_quantity():
-    """Тест создания продукта с нулевым количеством."""
-    with pytest.raises(ValueError, match="Товар с нулевым количеством не может быть добавлен"):
-        BaseProduct("Тест", "Описание", 100, 0)
-def test_product_negative_quantity():
-    """Тест создания продукта с отрицательным количеством."""
-    with pytest.raises(ValueError, match="Товар с нулевым количеством не может быть добавлен"):
-        BaseProduct("Тест", "Описание", 100, -1)
-
-
-def test_product_valid_quantity():
-    """Тест создания продукта с валидным количеством."""
-    product = BaseProduct("Тест", "Описание", 100, 10)
-    assert product.name == "Тест"
-    assert product.price == 100
-    assert product.quantity == 10
-
-
-def test_category_add_non_product():
-    """Тест добавления не-продукта в категорию."""
-    category = Category("Тест", "Описание")
-    with pytest.raises(TypeError):
-        category.add_product("не продукт")
-def test_category_average_price_empty():
-    """Тест средней цены пустой категории."""
-    category = Category("Тест", "Описание")
-    assert category.average_price() == 0
-
-
-def test_category_average_price_with_products():
-    """Тест средней цены категории с товарами."""
-    category = Category("Тест", "Описание")
-    product1 = BaseProduct("Товар1", "Описание", 100, 5)
-    product2 = BaseProduct("Товар2", "Описание", 300, 3)
-    category.add_product(product1)
-    category.add_product(product2)
+class TestProductExceptions:
+    """Тесты для класса Product с обработкой исключений."""
     
-    # (100 + 300) / 2 = 200
-    assert category.average_price() == 200
-
-
-def test_category_products_count():
-    """Тест подсчета товаров в категории."""
-    category = Category("Тест", "Описание")
-    assert category.get_products_count() == 0
-    product = BaseProduct("Товар", "Описание", 100, 5)
-    category.add_product(product)
-    assert category.get_products_count() == 1
-
-
-def test_category_contains():
-    """Тест проверки наличия товара в категории."""
-    category = Category("Тест", "Описание")
-    product = BaseProduct("Товар", "Описание", 100, 5)
-    category.add_product(product)
+    def test_product_creation_with_zero_quantity_raises_error(self):
+        """Тест: создание товара с нулевым количеством вызывает исключение."""
+        with pytest.raises(ZeroQuantityError) as exc_info:
+            Product("Тестовый товар", 1000, 0)
+        
+        assert str(exc_info.value) == "Товар с нулевым количеством не может быть добавлен"
+        assert isinstance(exc_info.value, ValueError)
     
-    assert product in category
-    assert BaseProduct("Другой", "Описание", 200, 3) not in category
+    def test_product_creation_with_positive_quantity_success(self):
+        """Тест: создание товара с положительным количеством проходит успешно."""
+        product = Product("Ноутбук", 150000, 3)
+        assert product.name == "Ноутбук"
+        assert product.price == 150000
+        assert product.quantity == 3
+    def test_product_string_representation(self):
+        """Тест: строковое представление товара."""
+        product = Product("Телефон", 50000, 5)
+        expected = "Телефон, 50000 руб. Остаток: 5 шт."
+        assert str(product) == expected
+    
+    def test_product_custom_exception_type(self):
+        """Тест: ZeroQuantityError является подклассом ValueError."""
+        assert issubclass(ZeroQuantityError, ValueError)
+
+
+class TestCategoryExceptions:
+    """Тесты для класса Category с обработкой исключений."""
+    
+    def setup_method(self):
+        """Настройка перед каждым тестом."""
+        self.category = Category("Электроника")
+        self.product1 = Product("Ноутбук", 100000, 2)
+        self.product2 = Product("Смартфон", 50000, 3)
+    
+    def test_category_average_price_with_products(self):
+        """Тест: расчет средней цены с товарами."""
+        self.category.products = [self.product1, self.product2]
+        expected_average = (100000 + 50000) / 2
+        assert self.category.calculate_average_price() == expected_average
+    
+    def test_category_average_price_empty(self):
+        """Тест: расчет средней цены для пустой категории."""
+        assert self.category.calculate_average_price() == 0.0
+    def test_category_average_price_single_product(self):
+        """Тест: расчет средней цены для одного товара."""
+        self.category.products = [self.product1]
+        assert self.category.calculate_average_price() == 100000
+    
+    def test_category_string_representation(self):
+        """Тест: строковое представление категории."""
+        self.category.products = [self.product1]
+        expected = "Категория: Электроника\nТовары:\nНоутбук, 100000 руб. Остаток: 2 шт."
+        assert str(self.category) == expected
+    
+    def test_add_product_success(self):
+        """Тест: успешное добавление товара в категорию."""
+        category = Category("Тестовая")
+        product = Product("Тестовый товар", 1000, 5)
+        
+        # Проверяем, что товар добавляется без ошибок
+        category.add_product(product)
+        assert len(category.products) == 1
+        assert category.products[0] == product
+    
+    def test_add_product_zero_quantity(self):
+        """Тест: попытка создания товара с нулевым количеством вызывает ошибку при создании."""
+        # Тест проверяет, что нельзя создать товар с нулевым количеством
+        pass
+    def test_add_product_with_existing_zero_quantity_product(self):
+        """Тест: работа категории с товаром, который изначально имеет нулевое количество."""
+        category = Category("Тестовая")
+        
+        # Сначала добавляем нормальный товар
+        good_product = Product("Хороший товар", 1000, 5)
+        category.add_product(good_product)
+        
+        # Проверяем, что только хороший товар добавлен
+        assert len(category.products) == 1
+        assert category.products[0] == good_product

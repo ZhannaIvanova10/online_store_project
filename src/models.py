@@ -1,79 +1,88 @@
 """
-Модели данных для интернет-магазина.
+Модуль для работы с товарами и категориями интернет-магазина.
+Включает обработку исключений для работы с нулевым количеством товаров.
 """
-import json
-import os
-class BaseProduct:
-    """Базовый класс товара."""
+
+
+class ZeroQuantityError(ValueError):
+    """Пользовательское исключение для товаров с нулевым количеством."""
     
-    def __init__(self, name: str, description: str, price: float, quantity: int):
+    def __init__(self, message="Товар с нулевым количеством не может быть добавлен"):
+        super().__init__(message)
+
+
+class Product:
+    """Класс для представления товара в магазине."""
+    
+    def __init__(self, name: str, price: float, quantity: int):
         """
         Инициализация товара.
         
         Args:
             name: Название товара
-            description: Описание товара
             price: Цена товара
             quantity: Количество товара
-            
         Raises:
-            ValueError: Если количество <= 0
+            ZeroQuantityError: Если quantity равен 0
         """
-        if quantity <= 0:
-            raise ValueError("Товар с нулевым количеством не может быть добавлен")
+        if quantity == 0:
+            raise ZeroQuantityError("Товар с нулевым количеством не может быть добавлен")
         
         self.name = name
-        self.description = description
         self.price = price
         self.quantity = quantity
+    
     def __str__(self):
-        return f"{self.name}: {self.price} руб. ({self.quantity} шт.)"
+        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
 
 
 class Category:
-    """Класс категории товаров."""
+    """Класс для представления категории товаров."""
     
-    def __init__(self, name: str, description: str):
+    def __init__(self, name: str):
         self.name = name
-        self.description = description
-        self.__products = []
-        
-    def add_product(self, product: BaseProduct):
-        """Добавить товар в категорию."""
-        self.__products.append(product)
-        print(f"[LOG] Добавлен продукт '{product.name}' в категорию '{self.name}'")
-        
-    def __str__(self):
-        products_list = "\n".join([f"  - {product}" for product in self.__products])
-        return f"Категория: {self.name}\nОписание: {self.description}\nТовары:\n{products_list}"
+        self.products = []
     
-    @property
-    def products(self):
-        """Возвращает список товаров."""
-        return [str(product) for product in self.__products]
-    
-    @property
-    def total_products(self):
-        """Возвращает количество товаров в категории."""
-        return len(self.__products)
-    def average_price(self):
+    def add_product(self, product: Product):
         """
-        Возвращает среднюю цену товаров в категории.
+        Добавляет товар в категорию.
         
-        Returns:
-            Средняя цена или 0, если товаров нет.
+        Args:
+            product: Объект класса Product для добавления
+            
+        Raises:
+            ZeroQuantityError: Если у товара quantity равен 0
         """
         try:
-            total_price = sum(product.price for product in self.__products)
-            return total_price / len(self.__products)
+            if product.quantity == 0:
+                raise ZeroQuantityError("Товар с нулевым количеством не может быть добавлен")
+            
+            self.products.append(product)
+            
+        except ZeroQuantityError as e:
+            print(f"Ошибка при добавлении товара: {e}")
+            raise
+        else:
+            print(f"Товар '{product.name}' успешно добавлен в категорию '{self.name}'")
+        finally:
+            print(f"Обработка добавления товара '{product.name}' завершена")
+    
+    def calculate_average_price(self) -> float:
+        """
+        Рассчитывает средний ценник всех товаров в категории.
+        
+        Returns:
+            Средняя цена товаров в категории или 0, если в категории нет товаров
+        """
+        if not self.products:
+            return 0.0
+        
+        try:
+            total_price = sum(product.price for product in self.products)
+            average = total_price / len(self.products)
+            return average
         except ZeroDivisionError:
-            return 0
-
-
-class Product(BaseProduct):
-    """Класс товара. Наследует проверку количества из BaseProduct."""
-    # Здесь нет необходимости переопределять __init__
-    # Все проверки уже есть в родительском классе
-    pass
-# Экспортируем классы
-__all__ = ['BaseProduct', 'Category', 'Product']
+            return 0.0
+    def __str__(self):
+        products_info = "\n".join(str(product) for product in self.products)
+        return f"Категория: {self.name}\nТовары:\n{products_info}"
